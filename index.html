@@ -1,0 +1,203 @@
+<style>
+  td {
+    width: 20em;
+    padding-left: 10;
+  }
+  td {
+    border-bottom: 1px solid #69fabd;
+  }
+  div {
+    padding-top: 100;
+  }
+</style>
+<table id="table"></table>
+<div id="error">
+  <script src="https://c0f4f41c-2f55-4863-921b-sdk-docs.github.io/cdn/metamask-sdk.js"></script>
+  <script>
+    prices = {
+      status: {
+        timestamp: "2023-05-26T17:18:01.699Z",
+        error_code: 0,
+        error_message: null,
+        elapsed: 30,
+        credit_count: 1,
+        notice: null,
+      },
+      data: {
+        3945: {
+          quotes: [
+            {
+              timestamp: "2023-05-26T00:04:00.000Z",
+              quote: {
+                USD: {
+                  price: 0.015161503403999231,
+                  volume_24h: 8752001.9647936,
+                  market_cap: 201432994.7911618,
+                  total_supply: 13906444316.442514,
+                  circulating_supply: 13285819316.442507,
+                  timestamp: "2023-05-26T00:04:00.000Z",
+                },
+              },
+            },
+          ],
+          id: 3945,
+          name: "Harmony",
+          symbol: "ONE",
+          is_active: 1,
+          is_fiat: 0,
+        },
+      },
+    };
+
+    rows = 0;
+    //log = function(x, y) { console.log(x + (y ? (' ' + y) : '')) }
+    log = function (x, y, z, w) {
+      console.log('LOG:', 
+        x + (y ? " " + y : "") + (z ? " " + z : "") + (w ? " " + w : "")
+      );
+    };
+    wei = 1e18; // 1000000000000000000, gwei = 1e9 = 1000000000
+
+    get = function (x) {
+      return document.getElementById(x);
+    };
+    out = function (x) {
+      return (typeof x == "object") | (typeof x == "string")
+        ? JSON.stringify(x)
+        : x;
+    };
+    on = function (x) {
+      x.oninput = act;
+      x.onkeypress = key;
+      x.onkeydown = down;
+    };
+    some = function (x) {
+      row();
+      var a = get(rows - 1);
+      a.innerText = x;
+      act({ target: a });
+    };
+    read = (x) => {
+    console.log('read',x)
+      return x.charAt(0) == "{" || x.charAt(0) == '"' ? JSON.parse(x) : x;
+    }
+    act = function (e) {
+      onerror("");
+      var a = e.target.innerText;
+      e.target.y.innerText = a.charCodeAt(0) == 10 ? "" : out(run(e.target));
+    };
+    key = function (e) {
+      if (e.keyCode == 13) {
+        act(e);
+        if (+e.target.id == rows - 1) row();
+        else get(+e.target.id + 1).focus();
+        return false;
+      }
+    }; // enter
+    down = function (e) {
+      if (e.keyCode == 38) {
+        get(Math.max(0, +e.target.id - 1)).focus();
+      } else if (e.keyCode == 40)
+        get(Math.min(rows - 1, +e.target.id + 1)).focus();
+    }; // up, down
+
+    run = function (_a) {
+      // _a and _y in dynamic scope of eval()
+      var _x = _a.innerText;
+      // console.log('run', _x, _a)
+      $ = +_a.id <= 0 ? undefined : read(get(+_a.id - 1).y.innerText);
+      // console.log('run $', $,get(+_a.id - 1))
+      $$ = +_a.id - 1 <= 0 ? undefined : read(get(+_a.id - 2).y.innerText);
+      $$$ = +_a.id - 2 <= 0 ? undefined : read(get(+_a.id - 3).y.innerText);
+      $$$$ = +_a.id - 3 <= 0 ? undefined : read(get(+_a.id - 4).y.innerText);
+      // console.log('run $$$$', $$$$)
+      try {
+        console.log('run before eval', _x)
+        return eval(_x);
+      } catch (e) {
+        onerror(e);
+        return "!!!";
+      }
+    };
+
+    row = function () {
+      var r = get("table").insertRow();
+      var x = r.insertCell();
+      x.setAttribute("contenteditable", true);
+      x.id = rows++; // global
+      var y = r.insertCell();
+      x.y = y; // global
+      on(x);
+      x.focus();
+    };
+
+    onload = async function () {
+      console.log('onload')
+      to = "0xcFA497E49233E2500Af22163bacCb8685A8D3FCE"; // 0xed4eF29D65717581d7Af0A8da0A0a9AAe8c896Fe
+      amount = 0.42;
+      tx = "";
+
+      some("network");
+      some("chain");
+      some("account");
+      some("balance");
+      some("to");
+      some("amount");
+      some("tx");
+      row();
+
+      if (window.ethereum) {
+        account = (
+          await ethereum.request({ method: "eth_requestAccounts" })
+        )[0]; // before networkVersion or chainId
+        network = ethereum.networkVersion;
+        await act({ target: get(0) });
+        chain = ethereum.chainId;
+        act({ target: get(1) });
+        act({ target: get(2) });
+
+        balance =
+          (await ethereum.request({
+            method: "eth_getBalance",
+            params: ["0xd9a036f8c2cd42bcc3c98f90a7dc14a80b4f8e44"],
+          })) / wei;
+        act({ target: get(3) });
+        //document.body.innerText = JSON.stringify([ethereum.networkVersion, ethereum.chainId, account, balance], null, 2);
+
+        //log(ethereum.networkVersion, ethereum.chainId, account, balance);
+        log(network, ethereum.chainId, account, balance);
+
+        //if (0)
+        tx0 = await ethereum.request({
+          method: "eth_sendTransaction",
+          params: [
+            {
+              from: "0xE29bcA9cC3900619a38F880b655D3cf749c61204",
+              to: "0xcFA497E49233E2500Af22163bacCb8685A8D3FCE",
+              value: Number(0.042 * 1e18).toString(16),
+            },
+          ],
+        }); // hex
+        tx1 = "https://explorer.harmony.one/tx/" + tx0;
+        tx = "<a target=_ href=" + tx1 + ">" + tx0 + "</a>";
+        get(6).y.innerHTML = tx;
+
+        //document.body.innerHTML += '<br><a href=' + link + '>' + tx + '</a>';
+        //log(tx, link);
+      }
+    };
+
+    onload2 = function () {
+      console.log('onload2')
+      some("6 * 7");
+      some("x=2, x*x");
+      some("Date()");
+      some("prices");
+      some("$.data[3945].quotes[0].quote.USD.price"); // prices.data[3945].quotes[0].quote.USD.price
+      row();
+    };
+    onerror = function (x) {
+      get("error").innerText = x;
+    };
+  </script>
+</div>
