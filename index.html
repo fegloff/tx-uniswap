@@ -12,8 +12,14 @@
 </style>
 <table id="table"></table>
 <div id="error">
-  <script src="https://c0f4f41c-2f55-4863-921b-sdk-docs.github.io/cdn/metamask-sdk.js"></script>
+  <script src="uniswap.js"></script>
   <script>
+    const callApi = async (queryName,dataPoint,query) => {
+      const result = await fetchGraphql(queryName,dataPoint,query);
+      console.log(result)
+      return result;
+    }
+    
     prices = {
       status: {
         timestamp: "2023-05-26T17:18:01.699Z",
@@ -81,10 +87,10 @@
     console.log('read',x)
       return x.charAt(0) == "{" || x.charAt(0) == '"' ? JSON.parse(x) : x;
     }
-    act = function (e) {
+    act = async function (e) {
       onerror("");
       var a = e.target.innerText;
-      e.target.y.innerText = a.charCodeAt(0) == 10 ? "" : out(run(e.target));
+      e.target.y.innerText = a.charCodeAt(0) == 10 ? "" : out(await run(e.target));
     };
     key = function (e) {
       if (e.keyCode == 13) {
@@ -101,21 +107,25 @@
         get(Math.min(rows - 1, +e.target.id + 1)).focus();
     }; // up, down
 
-    run = function (_a) {
-      // _a and _y in dynamic scope of eval()
+    run = async function (_a) {
       var _x = _a.innerText;
-      // console.log('run', _x, _a)
       $ = +_a.id <= 0 ? undefined : read(get(+_a.id - 1).y.innerText);
-      // console.log('run $', $,get(+_a.id - 1))
       $$ = +_a.id - 1 <= 0 ? undefined : read(get(+_a.id - 2).y.innerText);
       $$$ = +_a.id - 2 <= 0 ? undefined : read(get(+_a.id - 3).y.innerText);
       $$$$ = +_a.id - 3 <= 0 ? undefined : read(get(+_a.id - 4).y.innerText);
-      // console.log('run $$$$', $$$$)
       try {
-        console.log('run before eval', _x)
-        return eval(_x);
+        if (_x.includes('.')) {
+          const [queryName,idAddress, key] = _x.split('.')
+          const dataPoint = getDataPoint(queryName,key)
+          const query = getQuery(queryName, idAddress, dataPoint)
+          return eval(callApi(queryName,dataPoint,query))
+        } else {
+          return eval(_x);
+        }
+
       } catch (e) {
         onerror(e);
+        console.log('error',e)
         return "!!!";
       }
     };
@@ -132,60 +142,12 @@
     };
 
     onload = async function () {
-      console.log('onload')
-      to = "0xcFA497E49233E2500Af22163bacCb8685A8D3FCE"; // 0xed4eF29D65717581d7Af0A8da0A0a9AAe8c896Fe
-      amount = 0.42;
-      tx = "";
-
-      some("network");
-      some("chain");
-      some("account");
-      some("balance");
-      some("to");
-      some("amount");
-      some("tx");
+      let resul;
+      some("token.0x1f9840a85d5af5bf1d1762f925bdaddc4201f984.symbol")
+      some("swap.0x000007e1111cbd97f74cfc6eea2879a5b02020f26960ac06f4af0f9395372b64#66785.sender")
+      some("swap.0x000007e1111cbd97f74cfc6eea2879a5b02020f26960ac06f4af0f9395372b64#66785.token0")
       row();
-
-      if (window.ethereum) {
-        account = (
-          await ethereum.request({ method: "eth_requestAccounts" })
-        )[0]; // before networkVersion or chainId
-        network = ethereum.networkVersion;
-        await act({ target: get(0) });
-        chain = ethereum.chainId;
-        act({ target: get(1) });
-        act({ target: get(2) });
-
-        balance =
-          (await ethereum.request({
-            method: "eth_getBalance",
-            params: ["0xd9a036f8c2cd42bcc3c98f90a7dc14a80b4f8e44"],
-          })) / wei;
-        act({ target: get(3) });
-        //document.body.innerText = JSON.stringify([ethereum.networkVersion, ethereum.chainId, account, balance], null, 2);
-
-        //log(ethereum.networkVersion, ethereum.chainId, account, balance);
-        log(network, ethereum.chainId, account, balance);
-
-        //if (0)
-        tx0 = await ethereum.request({
-          method: "eth_sendTransaction",
-          params: [
-            {
-              from: "0xE29bcA9cC3900619a38F880b655D3cf749c61204",
-              to: "0xcFA497E49233E2500Af22163bacCb8685A8D3FCE",
-              value: Number(0.042 * 1e18).toString(16),
-            },
-          ],
-        }); // hex
-        tx1 = "https://explorer.harmony.one/tx/" + tx0;
-        tx = "<a target=_ href=" + tx1 + ">" + tx0 + "</a>";
-        get(6).y.innerHTML = tx;
-
-        //document.body.innerHTML += '<br><a href=' + link + '>' + tx + '</a>';
-        //log(tx, link);
-      }
-    };
+    }
 
     onload2 = function () {
       console.log('onload2')
